@@ -1,0 +1,139 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\addReservation;
+use App\Models\Auction;
+use App\Models\Category;
+use App\Models\Bid;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Illuminate\Support\Facades\Validator;
+
+class ApiController extends Controller
+{
+    public function index(){
+
+        $user = auth('user')->user();
+
+
+        $auctions = Auction::select('id','name', 'description', 'image','minimum_bid','winner_id','end_time','category_id','status' )->with('category')->get();
+
+        return response()->json(['details'=>$auctions]);
+
+    }
+    public function newAuction(Request $request){
+
+        $user = auth('user')->user();
+
+        // Validate the request data
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'description' => 'nullable|string',
+            'image' => 'nullable|string|url',
+            'minimum_bid' => 'required|numeric|min:0',
+            'category_id' => 'required|exists:categories,id',
+            // Add more validation rules as needed
+        ]);
+
+        // If validation fails, return error response
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Create a new auction
+        $auction = Auction::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'image' => $request->image,
+            'minimum_bid' => $request->minimum_bid,
+            'category_id' => $request->category_id,
+            'end_time' => $request->end_time,
+            'status' => $request->status,
+            // Add more fields as needed
+        ]);
+
+        // Return a success response with the created auction
+        return response()->json(['auction' => $auction], 201);
+    }
+    public function show($id){
+
+        $user = auth('user')->user();
+
+
+        $auction = Auction::findOrFail($id);
+        return response()->json(['auction' => $auction]);
+
+    }
+    public function placeBid(Request $request, $id)
+    {
+        // Validate the incoming request data
+        $validatedData = $request->validate([
+            'bid_amount' => 'required|numeric|min:0',
+            // Add other validation rules as needed
+        ]);
+
+        // Retrieve the auction by ID
+        $auction = Auction::findOrFail($id);
+
+        // Check if the auction is ongoing
+        if ($auction->status !== 'ongoing') {
+            return response()->json(['message' => 'Auction is not ongoing'], 400);
+        }
+
+        // Check if the bid amount is greater than the current highest bid
+        if ($validatedData['bid_amount'] <= $auction->bids()->orderBy('amount', 'desc')->first()) {
+            return response()->json(['message' => 'Bid amount must be greater than the current highest bid'], 400);
+        }
+
+        // Create a new bid record
+        $bid = new Bid([
+            'auction_id' => $auction->id,
+            'user_id' => auth('user')->user()->id, // Assuming the user is authenticated
+            'amount' => $validatedData['bid_amount'],
+        ]);
+        $bid->save();
+
+        // Update the auction with the new highest bid amount and bidder's information
+        $auction->current_bid = $validatedData['bid_amount'];
+        $auction->highest_bidder_id = auth('user')->user()->id; // Assuming the user is authenticated
+        $auction->save();
+
+        // Return a JSON response indicating success
+        return response()->json(['message' => 'Bid placed successfully', 'bid' => $bid], 201);
+    }
+    public function getBidHistory($id)
+    {
+        $auction = Auction::findOrFail($id);
+        $bids = $auction->bids()->with('user')->get();
+        return response()->json(['bids' => $bids]);
+    }
+    public function getWinner($id)
+    {
+        // Retrieve the auction by ID
+        $auction = Auction::findOrFail($id);
+
+        // Check if the auction is closed
+        if ($auction->status !== 'closed') {
+            return response()->json(['message' => 'Auction is not closed'], 400);
+        }
+
+        // Determine the winner based on the highest bid
+        $winner = $auction->bids()->orderBy('amount', 'desc')->first()->user;
+
+        // Return a JSON response with the winner's information
+        return response()->json(['winner' => $winner]);
+    }
+    public function userNotifications(){
+        $user_id = auth('user')->user()->id;
+
+        $user = User::find($user_id);
+
+        $notifications = $user -> notifications ;
+
+        return response()->json(['details'=>$notifications]);
+    }
+}
