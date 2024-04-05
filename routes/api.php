@@ -19,9 +19,9 @@ use App\Http\Controllers\Api\ApiController;
 Route::group([ 'prefix' => 'user' ] , function() {
     Route::post('/register' , [ AuthController::class , 'userRegister']);
     Route::post('/login' , [ AuthController::class , 'login']);
-    Route::post('/details' , [ AuthController::class , 'details'])->middleware('assignGuard:user');
+    Route::get('/details' , [ AuthController::class , 'details'])->middleware('assignGuard:user');
     Route::post('/logout' , [ AuthController::class , 'logout'])->middleware('assignGuard:user');
-    Route::post('/refresh', [AuthController::class, 'refresh'])->middleware('assignGuard:user');
+    Route::get('/refresh', [AuthController::class, 'refresh'])->middleware('assignGuard:user');
 });
 Route::group([ 'middleware' => [ 'assignGuard:user'], 'prefix' => 'user' ] , function() {
     Route::get('/auctions',[ ApiController::class , 'index']);
