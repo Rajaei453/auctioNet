@@ -10,18 +10,20 @@ class registerRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8'],
-            'city' => ['required', 'string'],
         ];
 
     }
     public function messages()
     {
         return [
-            'name.required'=>'The Name IS Required',
-            'name.max'=>'The Name Is Too Long',
+            'first_name.required'=>'The Name IS Required',
+            'first_name.max'=>'The Name Is Too Long',
+            'last_name.required'=>'The Name IS Required',
+            'last_name.max'=>'The Name Is Too Long',
             'email.required'=>'The Email Is Required',
             'email.string'=>'The Email Shl=ould Be Required',
             'email.email'=>'This is not Email',

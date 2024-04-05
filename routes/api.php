@@ -19,14 +19,28 @@ use App\Http\Controllers\Api\ApiController;
 Route::group([ 'prefix' => 'user' ] , function() {
     Route::post('/register' , [ AuthController::class , 'userRegister']);
     Route::post('/login' , [ AuthController::class , 'login']);
-    Route::post('/details' , [ AuthController::class , 'details']);
-    Route::post('/logout' , [ AuthController::class , 'logout']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::post('/details' , [ AuthController::class , 'details'])->middleware('assignGuard:user');
+    Route::post('/logout' , [ AuthController::class , 'logout'])->middleware('assignGuard:user');
+    Route::post('/refresh', [AuthController::class, 'refresh'])->middleware('assignGuard:user');
 });
 Route::group([ 'middleware' => [ 'assignGuard:user'], 'prefix' => 'user' ] , function() {
     Route::get('/auctions',[ ApiController::class , 'index']);
-    Route::post('/auctions', [ApiController::class, 'newAuction']);
-    Route::get('/auctions/{id}',[ ApiController::class , 'show']);
+
+    // Routes for Car Auctions
+    Route::get('/car-auctions', [ApiController::class, 'carAuctions']);
+    Route::get('/car-auctions/{id}', [ApiController::class, 'showCarAuction']);
+    Route::post('/car-auctions', [ApiController::class, 'storeCarAuction']);
+
+    // Routes for Real Estate Auctions
+    Route::get('/real-estate-auctions', [ApiController::class, 'realEstateAuctions']);
+    Route::get('/real-estate-auctions/{id}', [ApiController::class, 'showRealEstateAuction']);
+    Route::post('/real-estate-auctions', [ApiController::class, 'storeRealEstateAuction']);
+
+    // Routes for Other Auctions
+    Route::get('/other-auctions', [ApiController::class, 'otherAuctions']);
+    Route::get('/other-auctions/{id}', [ApiController::class, 'showOtherAuction']);
+    Route::post('/other-auctions', [ApiController::class, 'storeOtherAuction']);
+
     Route::get('/auctions/{id}/bids',[ ApiController::class , 'getBidHistory']);
     Route::post('/auctions/{id}/bid' , [ ApiController::class , 'placeBid']);
     Route::get('/auctions/{id}/winner',[ ApiController::class , 'getWinner']);

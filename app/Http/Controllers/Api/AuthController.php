@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Validator;
 
 
 class AuthController extends Controller
@@ -28,14 +29,28 @@ class AuthController extends Controller
     public function refresh() {
         return  $this->respondWithToken(auth()->refresh());
     }
-    public function userRegister(registerRequest $request)
+    public function userRegister(Request  $request)
     {
+        $rules = [
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8'],
+        ];
+
+        // Validate the request
+        $validator = Validator::make($request->all(), $rules);
+
+        // If validation fails, return the errors
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
         //  $user = Auth();//
         $user = User::create([
-            'name' => $request['name'],
+            'first_name' => $request['first_name'],
+            'last_name' => $request['last_name'],
             'email' => $request['email'],
             'password' => Hash::make($request['password']),
-            'city' => $request['city'],
         ]);
         if ($user)
         return response()->json(['success' => 'You are registered ']);
@@ -70,10 +85,6 @@ class AuthController extends Controller
     {
 
         $user = auth('user')->user();
-
-        $user->type = 'user';
-
-        // return $token;
 
         return response()->json(['details'=>$user]);
     }

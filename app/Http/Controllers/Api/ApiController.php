@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\addReservation;
 use App\Models\Auction;
+use App\Models\AuctionDetail;
 use App\Models\Category;
 use App\Models\Bid;
 use App\Models\User;
@@ -36,6 +37,8 @@ class ApiController extends Controller
             'image' => 'nullable|string|url',
             'minimum_bid' => 'required|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
+            'status' => 'required',
+            'end_time' => 'required',
             // Add more validation rules as needed
         ]);
 
@@ -68,6 +71,180 @@ class ApiController extends Controller
         return response()->json(['auction' => $auction]);
 
     }
+
+    public function carAuctions()
+    {
+        // Get all car auctions where the category ID is 1
+        $carAuctions = Auction::whereHas('category', function ($query) {
+            $query->where('id', 1); // Assuming category ID 1 represents car auctions
+        })->with('details:id,auction_id,brand,model,manufacturing_year,registration_year,engine_type')->get();
+
+        return response()->json($carAuctions);
+    }
+    public function showCarAuction($id)
+    {
+        // Fetch the car auction by ID where the category ID is 1
+        $carAuction = Auction::where('id', $id)
+            ->whereHas('category', function ($query) {
+                $query->where('id', 1); // Assuming category ID 1 represents car auctions
+            })
+            ->with('details:id,auction_id,brand,model,manufacturing_year,registration_year,engine_type')
+            ->first();
+
+        if (!$carAuction) {
+            return response()->json(['error' => 'Car auction not found'], 404);
+        }
+
+        return response()->json($carAuction);
+    }
+    public function storeCarAuction(Request $request)
+    {
+        // Validate the incoming request data
+        $validator = Validator::make($request->all(), [
+            // Define validation rules for the auction data
+            'name' => 'required|string',
+            'description' => 'nullable|string',
+            'image' => 'nullable|string|url',
+            'minimum_bid' => 'required|numeric|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'brand' => 'required|string',
+            'model' => 'required|string',
+            'engine_type' => 'required|string',
+            'manufacturing_year' => 'required|integer',
+            'registration_year' => 'required|integer',
+            'status' => 'required',
+            'end_time' => 'required',
+
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Create a new auction record with the provided data
+        $auction = Auction::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'image' => $request->image,
+            'minimum_bid' => $request->minimum_bid,
+            'category_id' => $request->category_id,
+            'end_time' => $request->end_time,
+            'status' => $request->status,
+        ]);
+
+        $auction->details()->create([
+            'brand' => $request->input('brand'),
+            'model' => $request->input('model'),
+            'manufacturing_year' => $request->input('manufacturing_year'),
+            'registration_year' => $request->input('registration_year'),
+            'engine_type' => $request->input('engine_type'),
+        ]);
+        $carAuction = Auction::where('id', $auction->id)
+            ->with('details:id,auction_id,brand,model,manufacturing_year,registration_year,engine_type')
+            ->first();
+
+        if (!$carAuction) {
+            return response()->json(['error' => 'Car auction not found'], 404);
+
+        }        return response()->json(['auction' => $carAuction], 201);
+    }
+    public function storeRealEstateAuction(Request $request)
+    {
+        // Validate the incoming request data
+        $validator = Validator::make($request->all(), [
+            // Define validation rules for the real estate auction data
+            'name' => 'required|string',
+            'description' => 'nullable|string',
+            'image' => 'nullable|string|url',
+            'minimum_bid' => 'required|numeric|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'country' => 'required|string',
+            'city' => 'required|string',
+            'area' => 'required|string',
+            'street' => 'required|string',
+            'status' => 'required',
+            'end_time' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Create a new auction record with the provided data
+        $auction = Auction::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'image' => $request->image,
+            'minimum_bid' => $request->minimum_bid,
+            'category_id' => $request->category_id,
+            'end_time' => $request->end_time,
+            'status' => $request->status,
+        ]);
+
+        // Create real estate auction details
+        $auction->details()->create([
+            'country' => $request->input('country'),
+            'city' => $request->input('city'),
+            'area' => $request->input('area'),
+            'street' => $request->input('street'),
+            'floor' => $request->input('floor'),
+            'total_area' => $request->input('total_area'),
+            'num_bedrooms' => $request->input('num_bedrooms'),
+            'num_bathrooms' => $request->input('num_bathrooms'),
+        ]);
+
+        // Retrieve the newly created real estate auction with details
+        $realEstateAuction = Auction::where('id', $auction->id)
+            ->with('details:id,auction_id,country,city,area,street,floor,total_area,num_bedrooms,num_bathrooms')
+            ->first();
+
+        if (!$realEstateAuction) {
+            return response()->json(['error' => 'Real estate auction not found'], 404);
+        }
+
+        return response()->json(['auction' => $realEstateAuction], 201);
+    }
+    public function storeOtherAuction(Request $request)
+    {
+        // Validate the incoming request data
+        $validator = Validator::make($request->all(), [
+            // Define validation rules for the other type of auction data
+            'name' => 'required|string',
+            'description' => 'required|string',
+            'image' => 'nullable|string|url',
+            'minimum_bid' => 'required|numeric|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'status' => 'required',
+            'end_time' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Create a new auction record with the provided data
+        $auction = Auction::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'image' => $request->image,
+            'minimum_bid' => $request->minimum_bid,
+            'category_id' => $request->category_id,
+            'end_time' => $request->end_time,
+            'status' => $request->status,
+        ]);
+
+
+        $otherAuction = Auction::where('id', $auction->id)->first();
+
+        if (!$otherAuction) {
+            return response()->json(['error' => 'Other type of auction not found'], 404);
+        }
+
+        return response()->json(['auction' => $otherAuction], 201);
+    }
+
+
+
     public function placeBid(Request $request, $id)
     {
         // Validate the incoming request data
