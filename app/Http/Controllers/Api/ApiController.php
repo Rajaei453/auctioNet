@@ -173,11 +173,13 @@ class ApiController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $photoPath = $request->file('image')->store('images', 'public');
+
         // Create a new auction record with the provided data
         $auction = Auction::create([
             'name' => $request->name,
             'description' => $request->description,
-            'image' => $request->image,
+            'image' => $photoPath,
             'minimum_bid' => $request->minimum_bid,
             'category_id' => $request->category_id,
             'end_time' => $request->end_time,
@@ -225,11 +227,14 @@ class ApiController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $photoPath = $request->file('image')->store('images', 'public');
+
+
         // Create a new auction record with the provided data
         $auction = Auction::create([
             'name' => $request->name,
             'description' => $request->description,
-            'image' => $request->image,
+            'image' => $photoPath,
             'minimum_bid' => $request->minimum_bid,
             'category_id' => $request->category_id,
             'end_time' => $request->end_time,
