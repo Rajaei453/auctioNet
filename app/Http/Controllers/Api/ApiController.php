@@ -158,7 +158,7 @@ class ApiController extends Controller
             // Define validation rules for the real estate auction data
             'name' => 'required|string',
             'description' => 'nullable|string',
-            'image' => 'nullable|string|url',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'minimum_bid' => 'required|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'country' => 'required|string',
@@ -214,7 +214,7 @@ class ApiController extends Controller
             // Define validation rules for the other type of auction data
             'name' => 'required|string',
             'description' => 'required|string',
-            'image' => 'nullable|string|url',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'minimum_bid' => 'required|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'status' => 'required',
