@@ -34,7 +34,7 @@ class ApiController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string',
             'description' => 'nullable|string',
-            'image' => 'nullable|string|url',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'minimum_bid' => 'required|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'status' => 'required',
@@ -47,15 +47,16 @@ class ApiController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $photoPath = $request->file('image')->store('images', 'public');
         // Create a new auction
         $auction = Auction::create([
             'name' => $request->name,
             'description' => $request->description,
-            'image' => $request->image,
             'minimum_bid' => $request->minimum_bid,
             'category_id' => $request->category_id,
             'end_time' => $request->end_time,
             'status' => $request->status,
+            'image' => $photoPath,
             // Add more fields as needed
         ]);
 
@@ -104,7 +105,7 @@ class ApiController extends Controller
             // Define validation rules for the auction data
             'name' => 'required|string',
             'description' => 'nullable|string',
-            'image' => 'nullable|string|url',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'minimum_bid' => 'required|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'brand' => 'required|string',
@@ -121,11 +122,13 @@ class ApiController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $photoPath = $request->file('image')->store('images', 'public');
+
         // Create a new auction record with the provided data
         $auction = Auction::create([
             'name' => $request->name,
             'description' => $request->description,
-            'image' => $request->image,
+            'image' => $photoPath,
             'minimum_bid' => $request->minimum_bid,
             'category_id' => $request->category_id,
             'end_time' => $request->end_time,
@@ -248,39 +251,33 @@ class ApiController extends Controller
     public function placeBid(Request $request, $id)
     {
         // Validate the incoming request data
-        $validatedData = $request->validate([
+        $validator = Validator::make($request->all(), [
             'bid_amount' => 'required|numeric|min:0',
-            // Add other validation rules as needed
         ]);
 
-        // Retrieve the auction by ID
-        $auction = Auction::findOrFail($id);
-
-        // Check if the auction is ongoing
-        if ($auction->status !== 'ongoing') {
-            return response()->json(['message' => 'Auction is not ongoing'], 400);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Check if the bid amount is greater than the current highest bid
-        if ($validatedData['bid_amount'] <= $auction->bids()->orderBy('amount', 'desc')->first()) {
+        $auction = Auction::find($id);
+
+        // Check if there are any existing bids
+        $highestBid = $auction->bids()->orderBy('amount', 'desc')->first();
+        if ($highestBid && $request->input('bid_amount') <= $highestBid->amount) {
             return response()->json(['message' => 'Bid amount must be greater than the current highest bid'], 400);
         }
 
-        // Create a new bid record
-        $bid = new Bid([
-            'auction_id' => $auction->id,
-            'user_id' => auth('user')->user()->id, // Assuming the user is authenticated
-            'amount' => $validatedData['bid_amount'],
-        ]);
+        // Place the bid
+        $bid = new Bid();
+        $bid->amount = $request->input('bid_amount');
+        $bid->auction_id = $id;
+        $bid->user_id = auth()->id(); // Assuming the user is authenticated
         $bid->save();
 
-        // Update the auction with the new highest bid amount and bidder's information
-        $auction->current_bid = $validatedData['bid_amount'];
-        $auction->highest_bidder_id = auth('user')->user()->id; // Assuming the user is authenticated
+        $auction->highest_bidder_id = $bid->user_id;
         $auction->save();
 
-        // Return a JSON response indicating success
-        return response()->json(['message' => 'Bid placed successfully', 'bid' => $bid], 201);
+        return response()->json(['message' => 'Bid placed successfully'], 200);
     }
     public function getBidHistory($id)
     {
