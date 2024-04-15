@@ -24,25 +24,35 @@ Route::group([ 'prefix' => 'user' ] , function() {
     Route::post('/logout' , [ AuthController::class , 'logout']);
 });
 Route::group([ 'middleware' => [ 'assignGuard:user'], 'prefix' => 'user' ] , function() {
-    Route::get('/auctions',[ ApiController::class , 'index']);
-
     // Routes for Car Auctions
-    Route::get('/car-auctions', [ApiController::class, 'carAuctions']);
-    Route::get('/car-auctions/{id}', [ApiController::class, 'showCarAuction']);
     Route::post('/car-auctions', [ApiController::class, 'storeCarAuction']);
 
     // Routes for Real Estate Auctions
-    Route::get('/real-estate-auctions', [ApiController::class, 'realEstateAuctions']);
-    Route::get('/real-estate-auctions/{id}', [ApiController::class, 'showRealEstateAuction']);
     Route::post('/real-estate-auctions', [ApiController::class, 'storeRealEstateAuction']);
 
     // Routes for Other Auctions
-    Route::get('/other-auctions', [ApiController::class, 'otherAuctions']);
-    Route::get('/other-auctions/{id}', [ApiController::class, 'showOtherAuction']);
     Route::post('/other-auctions', [ApiController::class, 'storeOtherAuction']);
 
+    // Routes for Bids
     Route::get('/auctions/{id}/bids',[ ApiController::class , 'getBidHistory']);
     Route::post('/auctions/{id}/bid' , [ ApiController::class , 'placeBid']);
+
+
+});
+Route::group(['prefix' => 'user'] , function() {
+    Route::get('/auctions',[ ApiController::class , 'getAllAuctions']);
+    Route::get('/specificAuction/{id}',[ApiController::class, 'getSpecificAuction']);
+
+    // Routes for Car Auctions
+    Route::get('/car-auctions',[ApiController::class, 'carAuctions'] );
+
+    // Routes for Real Estate Auctions
+    Route::get('/real-estate-auctions', [ApiController::class, 'realEstateAuctions']);
+
+    // Routes for Other Auctions
+    Route::get('/other-auctions', [ApiController::class, 'otherAuctions']);
+
+    // Routes for Bids
     Route::get('/auctions/{id}/winner',[ ApiController::class , 'getWinner']);
 
 

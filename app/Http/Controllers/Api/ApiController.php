@@ -16,16 +16,68 @@ use Illuminate\Support\Facades\Validator;
 
 class ApiController extends Controller
 {
-    public function index(){
+    public function getAllAuctions()
+    {
+        // Get all auctions
+        $auctions = Auction::all();
 
-        $user = auth('user')->user();
+        // Loop through each auction to determine fields to load based on category ID
+        $auctions->each(function ($auction) {
+            // Define default fields
+            $fields = [];
 
+            // Check the category ID and determine the fields accordingly
+            switch ($auction->category_id) {
+                case 1: // Car auction
+                    $fields = ['brand', 'model', 'manufacturing_year', 'registration_year', 'engine_type'];
+                    break;
+                case 2: // Real estate auction
+                    $fields = ['country', 'city', 'area', 'street', 'floor', 'total_area', 'num_bedrooms', 'num_bathrooms'];
+                    break;
+                default:
+                    break;
+            }
 
-        $auctions = Auction::select('id','name', 'description', 'image','minimum_bid','winner_id','end_time','category_id','status' )->with('category')->get();
+            // Eager load the details if fields are defined
+            if (!empty($fields)) {
+                $auction->load('details:id,auction_id,' . implode(',', $fields));
+            }
+        });
 
-        return response()->json(['details'=>$auctions]);
-
+        return response()->json($auctions);
     }
+
+    public function getSpecificAuction($id)
+    {
+        // Find the auction by ID
+        $auction = Auction::findOrFail($id);
+
+        // Check the category ID of the auction
+        $categoryId = $auction->category_id;
+
+        // Define default fields
+        $fields = [];
+
+        // Check the category ID and determine the fields accordingly
+        switch ($categoryId) {
+            case 1: // Car auction
+                $fields = ['brand', 'model', 'manufacturing_year', 'registration_year', 'engine_type'];
+                break;
+            case 2: // Real estate auction
+                $fields = ['country', 'city', 'area', 'street', 'floor', 'total_area', 'num_bedrooms', 'num_bathrooms'];
+                break;
+            default:
+                break;
+        }
+
+        // Eager load the details if fields are defined
+        if (!empty($fields)) {
+            $auction->load('details:id,auction_id,' . implode(',', $fields));
+        }
+
+        return response()->json($auction);
+    }
+
     public function newAuction(Request $request){
 
         $user = auth('user')->user();
@@ -81,22 +133,6 @@ class ApiController extends Controller
         })->with('details:id,auction_id,brand,model,manufacturing_year,registration_year,engine_type')->get();
 
         return response()->json($carAuctions);
-    }
-    public function showCarAuction($id)
-    {
-        // Fetch the car auction by ID where the category ID is 1
-        $carAuction = Auction::where('id', $id)
-            ->whereHas('category', function ($query) {
-                $query->where('id', 1); // Assuming category ID 1 represents car auctions
-            })
-            ->with('details:id,auction_id,brand,model,manufacturing_year,registration_year,engine_type')
-            ->first();
-
-        if (!$carAuction) {
-            return response()->json(['error' => 'Car auction not found'], 404);
-        }
-
-        return response()->json($carAuction);
     }
     public function storeCarAuction(Request $request)
     {
@@ -209,6 +245,16 @@ class ApiController extends Controller
 
         return response()->json(['auction' => $realEstateAuction], 201);
     }
+    public function realEstateAuctions()
+    {
+        // Get all real estate auctions where the category ID is 2
+        $realEstateAuctions = Auction::whereHas('category', function ($query) {
+            $query->where('id', 2); // Assuming category ID 2 represents real estate auctions
+        })->with('details:id,auction_id,country,city,area,street,floor,total_area,num_bedrooms,num_bathrooms')->get();
+
+        return response()->json($realEstateAuctions);
+    }
+
     public function storeOtherAuction(Request $request)
     {
         // Validate the incoming request data
@@ -251,6 +297,14 @@ class ApiController extends Controller
         return response()->json(['auction' => $otherAuction], 201);
     }
 
+    public function otherAuctions()
+    {
+        // Get auctions with category ID other than 1 and 2
+        $otherAuctions = Auction::whereNotIn('category_id', [1, 2])->get();
+
+        // Return the JSON response
+        return response()->json($otherAuctions);
+    }
 
 
     public function placeBid(Request $request, $id)
