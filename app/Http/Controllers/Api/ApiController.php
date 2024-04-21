@@ -77,6 +77,32 @@ class ApiController extends Controller
 
         return response()->json($auction);
     }
+    public function closeAuction($id)
+    {
+        try {
+            // Find the auction by its ID
+            $auction = Auction::findOrFail($id);
+
+            // Check if the auction is already closed
+            if ($auction->status === 'closed') {
+                return response()->json(['message' => 'Auction is already closed'], 200);
+            }
+
+            // Set the status of the auction to "closed"
+            $auction->status = 'closed';
+            $auction->save();
+
+            // Return a response indicating success
+            return response()->json(['message' => 'Auction closed successfully'], 200);
+        } catch (ModelNotFoundException $e) {
+            // Handle the case where the auction with the specified ID is not found
+            return response()->json(['error' => 'Auction not found'], 404);
+        } catch (\Exception $e) {
+            // Handle other unexpected errors
+            return response()->json(['error' => 'An error occurred while closing the auction'], 500);
+        }
+    }
+
 
     public function newAuction(Request $request){
 
@@ -194,7 +220,7 @@ class ApiController extends Controller
             // Define validation rules for the real estate auction data
             'name' => 'required|string',
             'description' => 'nullable|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'required|image',
             'minimum_bid' => 'required|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'country' => 'required|string',
@@ -299,12 +325,15 @@ class ApiController extends Controller
 
     public function otherAuctions()
     {
-        // Get auctions with category ID other than 1 and 2
-        $otherAuctions = Auction::whereNotIn('category_id', [1, 2])->get();
+        // Get auctions with category ID other than 1 and 2, ordered by a specific field (e.g., 'id' or 'created_at')
+        $otherAuctions = Auction::whereNotIn('category_id', [1, 2])
+            ->orderBy('id', 'asc') // Change 'id' to the desired field
+            ->get();
 
         // Return the JSON response
         return response()->json($otherAuctions);
     }
+
 
 
     public function placeBid(Request $request, $id)

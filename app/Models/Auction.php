@@ -21,6 +21,7 @@ class Auction extends Model
         'status', // Category ID
     ];
 
+
     public function category()
     {
         return $this->belongsTo(Category::class);

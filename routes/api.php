@@ -23,7 +23,28 @@ Route::group([ 'prefix' => 'user' ] , function() {
     Route::get('/refresh', [AuthController::class, 'refresh'])->middleware('assignGuard:user');
     Route::post('/logout' , [ AuthController::class , 'logout']);
 });
+Route::group(['prefix' => 'user'] , function() {
+    Route::get('/auctions',[ ApiController::class , 'getAllAuctions']);
+    Route::get('/specificAuction/{id}',[ApiController::class, 'getSpecificAuction']);
+
+
+    // Routes for Car Auctions
+    Route::get('/car-auctions',[ApiController::class, 'carAuctions'] );
+
+    // Routes for Real Estate Auctions
+    Route::get('/real-estate-auctions', [ApiController::class, 'realEstateAuctions']);
+
+    // Routes for Other Auctions
+    Route::get('/other-auctions', [ApiController::class, 'otherAuctions']);
+
+    // Routes for Bids
+    Route::get('/auctions/{id}/winner',[ ApiController::class , 'getWinner']);
+
+});
 Route::group([ 'middleware' => [ 'assignGuard:user'], 'prefix' => 'user' ] , function() {
+    // Routes for Auctions
+    Route::get('/auctions/{id}/close', [ApiController::class, 'closeAuction']);
+
     // Routes for Car Auctions
     Route::post('/car-auctions', [ApiController::class, 'storeCarAuction']);
 
@@ -38,23 +59,7 @@ Route::group([ 'middleware' => [ 'assignGuard:user'], 'prefix' => 'user' ] , fun
     Route::post('/auctions/{id}/bid' , [ ApiController::class , 'placeBid']);
 
 
-});
-Route::group(['prefix' => 'user'] , function() {
-    Route::get('/auctions',[ ApiController::class , 'getAllAuctions']);
-    Route::get('/specificAuction/{id}',[ApiController::class, 'getSpecificAuction']);
-
-    // Routes for Car Auctions
-    Route::get('/car-auctions',[ApiController::class, 'carAuctions'] );
-
-    // Routes for Real Estate Auctions
-    Route::get('/real-estate-auctions', [ApiController::class, 'realEstateAuctions']);
-
-    // Routes for Other Auctions
-    Route::get('/other-auctions', [ApiController::class, 'otherAuctions']);
-
-    // Routes for Bids
-    Route::get('/auctions/{id}/winner',[ ApiController::class , 'getWinner']);
-
 
 });
+
 
