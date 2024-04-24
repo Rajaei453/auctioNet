@@ -27,10 +27,10 @@ class AssignGuard extends BaseMiddleware
             try {
                 $user = auth($guard)->userOrFail();
             } catch (TokenExpiredException $e) {
-                return  $this -> returnError('401','Unauthenticated user');
+                return  $this -> returnError('401','Unauthenticated user ');
             } catch (JWTException $e) {
 
-                return  $this -> returnError('', 'token_invalid'.$e->getMessage());
+                return  $this -> returnError('', 'token_invalid '.$e->getMessage());
             }
 
         }

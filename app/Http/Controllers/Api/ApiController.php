@@ -75,6 +75,12 @@ class ApiController extends Controller
             $auction->load('details:id,auction_id,' . implode(',', $fields));
         }
 
+        // Get the highest bid amount
+        $current_bid = $auction->highestBidAmount();
+
+        // Add the highest bid amount to the response
+        $auction->current_bid = $current_bid;
+
         return response()->json($auction);
     }
     public function closeAuction($id)
