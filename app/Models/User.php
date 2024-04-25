@@ -50,6 +50,16 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Notification::class,'user_id','id');
     }
 
+    public function bids()
+    {
+        return $this->hasMany(Bid::class);
+    }
+
+    public function auctions()
+    {
+        return $this->hasMany(Auction::class);
+    }
+
     public function getJWTIdentifier()
     {
         return $this->getKey();

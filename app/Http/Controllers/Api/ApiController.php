@@ -108,6 +108,40 @@ class ApiController extends Controller
             return response()->json(['error' => 'An error occurred while closing the auction'], 500);
         }
     }
+    public function getUserAuctions()
+    {
+        try {
+            // Get the authenticated user
+            $user = auth('user')->user();
+
+            // Retrieve the user's auctions
+            $userAuctions = $user->auctions()->get();
+
+            return response()->json($userAuctions);
+        } catch (\Exception $e) {
+            // Handle any exceptions
+            return response()->json(['error' => 'Failed to retrieve user auctions'], 500);
+        }
+    }
+    public function getUserBids()
+    {
+        try {
+            // Get the authenticated user's ID
+            $userId = auth('user')->user()->id;
+
+            // Find the user
+            $user = User::findOrFail($userId);
+
+            // Load the user's bids
+            $bids = $user->bids;
+
+            // Return the bids
+            return response()->json($bids);
+        } catch (\Exception $e) {
+            // Handle the error
+            return response()->json(['error' => 'Failed to fetch user bids'], 500);
+        }
+    }
 
 
     public function newAuction(Request $request){
@@ -183,7 +217,8 @@ class ApiController extends Controller
             'registration_year' => 'required|integer',
             'status' => 'required',
             'end_time' => 'required',
-
+            'type' => 'required|in:regular,live,anonymous', // Add auction type validation rule
+            'increment_amount' => ($request->input('type') === 'live') ? 'required|numeric|min:0' : '', // Conditionally add increment_amount validation rule
         ]);
 
         if ($validator->fails()) {
@@ -194,13 +229,17 @@ class ApiController extends Controller
 
         // Create a new auction record with the provided data
         $auction = Auction::create([
+            'user_id' => auth('user')->user()->id,
             'name' => $request->name,
             'description' => $request->description,
             'image' => $photoPath,
             'minimum_bid' => $request->minimum_bid,
             'category_id' => $request->category_id,
+            'start_time' => $request->start_time,
             'end_time' => $request->end_time,
             'status' => $request->status,
+            'type' => $request->type, // Store the auction type
+            'increment_amount' => ($request->input('type') === 'live') ? $request->increment_amount : null, // Store increment_amount for live auctions
         ]);
 
         $auction->details()->create([
@@ -210,15 +249,18 @@ class ApiController extends Controller
             'registration_year' => $request->input('registration_year'),
             'engine_type' => $request->input('engine_type'),
         ]);
+
         $carAuction = Auction::where('id', $auction->id)
             ->with('details:id,auction_id,brand,model,manufacturing_year,registration_year,engine_type')
             ->first();
 
         if (!$carAuction) {
             return response()->json(['error' => 'Car auction not found'], 404);
+        }
 
-        }        return response()->json(['auction' => $carAuction], 201);
+        return response()->json(['auction' => $carAuction], 201);
     }
+
     public function storeRealEstateAuction(Request $request)
     {
         // Validate the incoming request data
@@ -235,6 +277,8 @@ class ApiController extends Controller
             'street' => 'required|string',
             'status' => 'required',
             'end_time' => 'required',
+            'type' => 'required|in:regular,live,anonymous', // Add auction type validation rule
+            'increment_amount' => ($request->input('type') === 'live') ? 'required|numeric|min:0' : '', // Conditionally add increment_amount validation rule
         ]);
 
         if ($validator->fails()) {
@@ -245,13 +289,17 @@ class ApiController extends Controller
 
         // Create a new auction record with the provided data
         $auction = Auction::create([
+            'user_id' => auth('user')->user()->id,
             'name' => $request->name,
             'description' => $request->description,
             'image' => $photoPath,
             'minimum_bid' => $request->minimum_bid,
             'category_id' => $request->category_id,
+            'start_time' => $request->start_time,
             'end_time' => $request->end_time,
             'status' => $request->status,
+            'type' => $request->type, // Store the auction type
+            'increment_amount' => ($request->input('type') === 'live') ? $request->increment_amount : null, // Store increment_amount for live auctions
         ]);
 
         // Create real estate auction details
@@ -277,6 +325,7 @@ class ApiController extends Controller
 
         return response()->json(['auction' => $realEstateAuction], 201);
     }
+
     public function realEstateAuctions()
     {
         // Get all real estate auctions where the category ID is 2
@@ -310,11 +359,13 @@ class ApiController extends Controller
 
         // Create a new auction record with the provided data
         $auction = Auction::create([
+            'user_id'=> auth('user')->user()->id,
             'name' => $request->name,
             'description' => $request->description,
             'image' => $photoPath,
             'minimum_bid' => $request->minimum_bid,
             'category_id' => $request->category_id,
+            'start_time' => $request->start_time,
             'end_time' => $request->end_time,
             'status' => $request->status,
         ]);
@@ -344,34 +395,49 @@ class ApiController extends Controller
 
     public function placeBid(Request $request, $id)
     {
-        // Validate the incoming request data
-        $validator = Validator::make($request->all(), [
-            'bid_amount' => 'required|numeric|min:0',
-        ]);
+        try {
+            // Validate the incoming request data
+            $validator = Validator::make($request->all(), [
+                'bid_amount' => 'required|numeric|min:0',
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $auction = Auction::findOrFail($id);
+
+            // Check if the auction is closed
+            if ($auction->status === 'closed') {
+                return response()->json(['message' => 'This auction is closed'], 400);
+            }
+
+            // Check if the auction has started
+            if ($auction->start_time > now()) {
+                return response()->json(['message' => 'This auction has not yet started'], 400);
+            }
+
+            // Check if the bid amount is higher than the current highest bid
+            $highestBid = $auction->bids()->orderBy('amount', 'desc')->first();
+            if ($highestBid && $request->input('bid_amount') <= $highestBid->amount) {
+                return response()->json(['message' => 'Bid amount must be greater than the current highest bid'], 400);
+            }
+
+            // Place the bid
+            $bid = new Bid();
+            $bid->amount = $request->input('bid_amount');
+            $bid->auction_id = $id;
+            $bid->user_id = auth()->id(); // Assuming the user is authenticated
+            $bid->save();
+
+            $auction->highest_bidder_id = $bid->user_id;
+            $auction->save();
+
+            return response()->json(['message' => 'Bid placed successfully'], 200);
+        } catch (\Exception $e) {
+            // Handle any other unexpected errors
+            return response()->json(['error' => 'Failed to place bid'], 500);
         }
-
-        $auction = Auction::find($id);
-
-        // Check if there are any existing bids
-        $highestBid = $auction->bids()->orderBy('amount', 'desc')->first();
-        if ($highestBid && $request->input('bid_amount') <= $highestBid->amount) {
-            return response()->json(['message' => 'Bid amount must be greater than the current highest bid'], 400);
-        }
-
-        // Place the bid
-        $bid = new Bid();
-        $bid->amount = $request->input('bid_amount');
-        $bid->auction_id = $id;
-        $bid->user_id = auth()->id(); // Assuming the user is authenticated
-        $bid->save();
-
-        $auction->highest_bidder_id = $bid->user_id;
-        $auction->save();
-
-        return response()->json(['message' => 'Bid placed successfully'], 200);
     }
     public function getBidHistory($id)
     {

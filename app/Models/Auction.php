@@ -10,10 +10,13 @@ class Auction extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id', // the owner of the auction
         'name', // Name of the item
+        'type', // Type of the item
         'description', // Description of the item
         'image', // Image URL of the item
         'minimum_bid', // Minimum bid price
+        'increment_amount', // increment amount for bid
         'highest_bidder_id', // Highest bidder ID
         'winner_id', // Winner's ID
         'start_time',// Start time of the auction
@@ -46,6 +49,10 @@ class Auction extends Model
     {
         $highestBid = $this->highestBid;
         return $highestBid ? $highestBid->amount : null;
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
 

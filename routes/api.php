@@ -27,7 +27,6 @@ Route::group(['prefix' => 'user'] , function() {
     Route::get('/auctions',[ ApiController::class , 'getAllAuctions']);
     Route::get('/specificAuction/{id}',[ApiController::class, 'getSpecificAuction']);
 
-
     // Routes for Car Auctions
     Route::get('/car-auctions',[ApiController::class, 'carAuctions'] );
 
@@ -41,9 +40,13 @@ Route::group(['prefix' => 'user'] , function() {
     Route::get('/auctions/{id}/winner',[ ApiController::class , 'getWinner']);
 
 });
+
+//////////////////////////////////////////auth routes/////////////////////////////////////////////
 Route::group([ 'middleware' => [ 'assignGuard:user'], 'prefix' => 'user' ] , function() {
     // Routes for Auctions
     Route::get('/auctions/{id}/close', [ApiController::class, 'closeAuction']);
+    Route::get('/my-auctions', [ApiController::class, 'getUserAuctions']);
+    Route::get('/my-bids', [ApiController::class, 'getUserBids']);
 
     // Routes for Car Auctions
     Route::post('/car-auctions', [ApiController::class, 'storeCarAuction']);
