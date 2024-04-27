@@ -25,6 +25,7 @@ Route::group([ 'prefix' => 'user' ] , function() {
 });
 Route::group(['prefix' => 'user'] , function() {
     Route::get('/auctions',[ ApiController::class , 'getAllAuctions']);
+    Route::get('/upcoming-auctions',[ ApiController::class , 'getUpcomingAuctions']);
     Route::get('/specificAuction/{id}',[ApiController::class, 'getSpecificAuction']);
 
     // Routes for Car Auctions
@@ -59,7 +60,9 @@ Route::group([ 'middleware' => [ 'assignGuard:user'], 'prefix' => 'user' ] , fun
 
     // Routes for Bids
     Route::get('/auctions/{id}/bids',[ ApiController::class , 'getBidHistory']);
-    Route::post('/auctions/{id}/bid' , [ ApiController::class , 'placeBid']);
+    Route::post('/regular-auctions/{id}/bid' , [ ApiController::class , 'placeRegularBid']);
+    Route::post('/live-auctions/{id}/bid' , [ ApiController::class , 'placeLiveBid']);
+    Route::post('/anonymous-auctions/{id}/bid' , [ ApiController::class , 'placeAnonymousBid']);
 
 
 
