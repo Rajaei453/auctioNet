@@ -186,16 +186,16 @@ class ApiController extends Controller
     {
         try {
             // Get the authenticated user's ID
-            $userId = auth('user')->user()->id;
+            $userId = auth()->user()->id;
 
             // Find the user
             $user = User::findOrFail($userId);
 
-            // Load the user's bids
-            $bids = $user->bids;
+            // Load the user's bids with associated auction details
+            $bids = $user->bids()->with('auction')->get();
 
             // Return the bids
-            return response()->json($bids);
+            return response()->json(['bids' => $bids], 200);
         } catch (\Exception $e) {
             // Handle the error
             return response()->json(['error' => 'Failed to fetch user bids'], 500);
