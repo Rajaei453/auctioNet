@@ -154,6 +154,27 @@ class ApiController extends Controller
 
             // Retrieve the user's auctions
             $userAuctions = $user->auctions()->get();
+            $userAuctions->each(function ($auction) {
+                // Define default fields
+                $fields = [];
+
+                // Check the category ID and determine the fields accordingly
+                switch ($auction->category_id) {
+                    case 1: // Car auction
+                        $fields = ['brand', 'model', 'manufacturing_year', 'registration_year', 'engine_type'];
+                        break;
+                    case 2: // Real estate auction
+                        $fields = ['country', 'city', 'area', 'street', 'floor', 'total_area', 'num_bedrooms', 'num_bathrooms'];
+                        break;
+                    default:
+                        break;
+                }
+
+                // Eager load the details if fields are defined
+                if (!empty($fields)) {
+                    $auction->load('details:id,auction_id,' . implode(',', $fields));
+                }
+            });
 
             return response()->json($userAuctions);
         } catch (\Exception $e) {
