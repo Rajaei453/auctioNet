@@ -47,6 +47,7 @@ Route::group([ 'middleware' => [ 'assignGuard:user'], 'prefix' => 'user' ] , fun
     // Routes for Auctions
     Route::get('/auctions/{id}/close', [ApiController::class, 'closeAuction']);
     Route::get('/my-auctions', [ApiController::class, 'getUserAuctions']);
+    Route::get('/auctions/{id}/editdetails', [ApiController::class, 'updateAuctionDetails']);
     Route::get('/my-bids', [ApiController::class, 'getUserBids']);
 
     // Routes for Car Auctions

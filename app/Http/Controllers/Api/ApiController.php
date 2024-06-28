@@ -603,6 +603,58 @@ class ApiController extends Controller
         }
     }
 
+    public function updateAuctionDetails(Request $request, $id)
+    {
+        try {
+            // Find the auction
+            $auction = Auction::findOrFail($id);
+
+            // Check if the authenticated user is the owner of the auction
+            if ($auction->user_id !== auth()->id()) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+
+            // Validate the incoming request data
+            $validator = Validator::make($request->all(), [
+                'name' => 'nullable|string',
+                'brand' => 'nullable|string',
+                'model' => 'nullable|string',
+                'manufacturing_year' => 'nullable|integer',
+                'registration_year' => 'nullable|integer',
+                'engine_type' => 'nullable|string',
+                'country' => 'nullable|string',
+                'city' => 'nullable|string',
+                'area' => 'nullable|string',
+                'street' => 'nullable|string',
+                'floor' => 'nullable|integer',
+                'total_area' => 'nullable|numeric',
+                'num_bedrooms' => 'nullable|integer',
+                'num_bathrooms' => 'nullable|integer',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            // Update auction details
+            $details = $auction->details;
+
+            if ($details) {
+                $details->update($request->all());
+            } else {
+                // If details do not exist, create new ones
+                $details = new AuctionDetail($request->all());
+                $details->auction_id = $auction->id;
+                $details->save();
+            }
+
+            return response()->json(['message' => 'Auction details updated successfully', 'details' => $details], 200);
+        } catch (\Exception $e) {
+            // Handle any other unexpected errors
+            return response()->json(['error' => 'Failed to update auction details'], 500);
+        }
+    }
+
 
 
     public function getBidHistory($id)
@@ -640,4 +692,5 @@ class ApiController extends Controller
 
         return response()->json(['details'=>$notifications]);
     }
+
 }
