@@ -687,6 +687,7 @@ class ApiController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+
     }
 
 
