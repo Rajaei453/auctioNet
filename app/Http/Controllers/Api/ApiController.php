@@ -9,6 +9,7 @@ use App\Models\AuctionDetail;
 use App\Models\Category;
 use App\Models\Bid;
 use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
@@ -200,6 +201,17 @@ class ApiController extends Controller
             // Handle the error
             return response()->json(['error' => 'Failed to fetch user bids'], 500);
         }
+    }
+
+    public function getNotification()
+    {
+        // Get the authenticated user's notifications
+        $notifications = Notification::where('user_id', auth()->id())->orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'notifications' => $notifications
+        ]);
     }
 
 

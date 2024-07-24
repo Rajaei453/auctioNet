@@ -11,8 +11,6 @@ class Notification extends Model
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    //protected $table = ['reservation'];
-
     protected $fillable = [
         'user_id',
         'name',
