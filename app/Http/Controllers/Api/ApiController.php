@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\addReservation;
 use App\Models\Auction;
 use App\Models\AuctionDetail;
 use App\Models\Category;
@@ -206,7 +205,7 @@ class ApiController extends Controller
     public function getNotification()
     {
         // Get the authenticated user's notifications
-        $notifications = Notification::where('user_id', auth()->id())->orderBy('created_at', 'desc')->get();
+        $notifications = Notification::where('user_id', auth()->id())->orderBy('created_at', 'desc')->with('attachable')->get();
 
         return response()->json([
             'success' => true,

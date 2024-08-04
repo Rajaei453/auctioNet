@@ -55,5 +55,9 @@ class Auction extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'attachable');
+    }
 
 }

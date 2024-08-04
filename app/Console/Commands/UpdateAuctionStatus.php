@@ -8,7 +8,7 @@ use App\Models\Bid;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
-class UpdateAuctionStatus extends Command
+class   UpdateAuctionStatus extends Command
 {
     protected $signature = 'auction:update-status';
     protected $description = 'Update the status of auctions based on start and end times';
@@ -65,6 +65,8 @@ class UpdateAuctionStatus extends Command
                 'name' => 'Auction Ended',
                 'content' => $message,
                 'status' => '0',
+                'attachable_id' => $auction->id,
+                'attachable_type' => get_class($auction),
             ]);
         }
     }
