@@ -38,6 +38,9 @@ Route::group(['prefix' => 'user'], function () {
     // Routes for Other Auctions
     Route::get('/other-auctions', [ApiController::class, 'otherAuctions']);
 
+    // Routes for Decreasing Auctions
+    Route::get('/decreasing-auctions', [ApiController::class, 'decreasingAuctions']);
+
     // Routes for Bids
     Route::get('/auctions/{id}/winner', [ApiController::class, 'getWinner']);
 });
@@ -72,4 +75,5 @@ Route::group(['middleware' => ['assignGuard:user'], 'prefix' => 'user'], functio
     Route::get('/search/cars', [ApiController::class, 'searchCars']);
     Route::get('/search/others', [ApiController::class, 'searchOthers']);
     Route::get('/search/all', [ApiController::class, 'searchAll']);
+    Route::get('/search/decreasing-auctions', [ApiController::class, 'searchDecreasingAuctions']);
 });

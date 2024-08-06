@@ -507,6 +507,17 @@ class ApiController extends Controller
         return response()->json($otherAuctions);
     }
 
+    public function decreasingAuctions()
+    {
+        // Get auctions
+        $decreasingAuctions = Auction::where('type', 'decreasing')
+            ->orderBy('id', 'asc') // Change 'id' to the desired field
+            ->get();
+
+        // Return the JSON response
+        return response()->json($decreasingAuctions);
+    }
+
 
 
     public function placeRegularBid(Request $request, $id)
@@ -860,12 +871,12 @@ class ApiController extends Controller
 
     public function searchRealEstate(Request $request)
     {
-        return $this->search($request, 2); // Assuming category_id for real estate is 1
+        return $this->search($request, 1); // Assuming category_id for real estate is 1
     }
 
     public function searchCars(Request $request)
     {
-        return $this->search($request, 1); // Assuming category_id for cars is 2
+        return $this->search($request, 2); // Assuming category_id for cars is 2
     }
 
     public function searchOthers(Request $request)
@@ -878,13 +889,20 @@ class ApiController extends Controller
         return $this->search($request, null); // No category filter
     }
 
-    protected function search(Request $request, $categoryId = null)
+    public function searchDecreasingAuctions(Request $request)
+    {
+        return $this->search($request, 'decreasing'); // Filter for decreasing auctions
+    }
+
+    protected function search(Request $request, $filter = null)
     {
         $query = Auction::leftJoin('auction_details', 'auctions.id', '=', 'auction_details.auction_id')
             ->select('auctions.*');
 
-        if ($categoryId !== null) {
-            $query->where('category_id', $categoryId);
+        if (is_numeric($filter)) {
+            $query->where('category_id', $filter);
+        } elseif ($filter === 'decreasing') {
+            $query->where('auctions.type', 'decreasing');
         }
 
         if ($request->has('q')) {
