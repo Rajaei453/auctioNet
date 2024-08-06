@@ -450,6 +450,51 @@ class ApiController extends Controller
 
         return response()->json(['auction' => $otherAuction], 201);
     }
+    public function storeDecreasingOtherAuction(Request $request)
+    {
+        // Validate the incoming request data
+        $validator = Validator::make($request->all(), [
+            // Define validation rules for the other type of auction data
+            'name' => 'required|string',
+            'type' => 'required|in:regular,live,anonymous,decreasing', // Add auction type validation rule
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'minimum_bid' => 'required|numeric|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'status' => 'required',
+            'start_time' => 'required',
+            'end_time' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $photoPath = $request->file('image')->store('images', 'public');
+
+
+        // Create a new auction record with the provided data
+        $auction = Auction::create([
+            'user_id'=> auth('user')->user()->id,
+            'name' => $request->name,
+            'description' => $request->description,
+            'image' => $photoPath,
+            'minimum_bid' => $request->minimum_bid,
+            'category_id' => $request->category_id,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'status' => $request->status,
+            'type' => $request->type, // Store the auction type
+        ]);
+
+
+        $otherAuction = Auction::where('id', $auction->id)->first();
+
+        if (!$otherAuction) {
+            return response()->json(['error' => 'Other type of auction not found'], 404);
+        }
+
+        return response()->json(['auction' => $otherAuction], 201);
+    }
 
     public function otherAuctions()
     {
@@ -512,6 +557,52 @@ class ApiController extends Controller
             $bid->save();
 
             $auction->highest_bidder_id = $bid->user_id;
+            $auction->save();
+
+            return response()->json(['message' => 'Bid placed successfully'], 200);
+        } catch (\Exception $e) {
+            // Handle any other unexpected errors
+            return response()->json(['error' => 'Failed to place bid'], 500);
+        }
+    }
+    public function placeDecresingBid(Request $request, $id)
+    {
+        try {
+            // Validate the incoming request data
+            $validator = Validator::make($request->all(), [
+                'bid_amount' => 'required|numeric|min:0',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $auction = Auction::findOrFail($id);
+
+            // Check if the auction is of type 'anonymous'
+            if ($auction->type !== 'decreasing') {
+                return response()->json(['message' => 'Bids can only be placed on decreasing auctions'], 400);
+            }
+
+            // Check if the auction is closed
+            if ($auction->status != 'ongoing') {
+                return response()->json(['message' => 'This auction is not open'], 400);
+            }
+
+            // Check if the auction has started
+            if ($auction->start_time > now()) {
+                return response()->json(['message' => 'This auction has not yet started'], 400);
+            }
+
+            // Place the bid
+            $bid = new Bid();
+            $bid->amount = $request->input('bid_amount');
+            $bid->auction_id = $id;
+            $bid->user_id = auth()->id(); // Assuming the user is authenticated
+            $bid->save();
+
+            // Update the highest bidder ID in the auction
+            $auction->highest_bidder_id = auth()->id();
             $auction->save();
 
             return response()->json(['message' => 'Bid placed successfully'], 200);

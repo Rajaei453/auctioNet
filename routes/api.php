@@ -59,10 +59,12 @@ Route::group(['middleware' => ['assignGuard:user'], 'prefix' => 'user'], functio
 
     // Routes for Other Auctions
     Route::post('/other-auctions', [ApiController::class, 'storeOtherAuction']);
+    Route::post('/decreasing-other-auctions', [ApiController::class, 'storeDecreasingOtherAuction']);
 
     // Routes for Bids
     Route::get('/auctions/{id}/bids', [ApiController::class, 'getBidHistory']);
     Route::post('/regular-auctions/{id}/bid', [ApiController::class, 'placeRegularBid']);
     Route::post('/live-auctions/{id}/bid', [ApiController::class, 'placeLiveBid']);
     Route::post('/anonymous-auctions/{id}/bid', [ApiController::class, 'placeAnonymousBid']);
+    Route::post('/decreasing-auctions/{id}/bid', [ApiController::class, 'placeDecresingBid']);
 });
