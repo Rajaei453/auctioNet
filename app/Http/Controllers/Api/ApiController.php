@@ -830,4 +830,75 @@ class ApiController extends Controller
         return response()->json(['details'=>$notifications]);
     }
 
+    protected $searchableFields = [
+        'auctions.name',
+        'auctions.type',
+        'auctions.description',
+        'auctions.image',
+        'auctions.minimum_bid',
+        'auctions.increment_amount',
+        'auctions.highest_bidder_id',
+        'auctions.winner_id',
+        'auctions.start_time',
+        'auctions.end_time',
+        'auctions.category_id',
+        'auctions.status',
+        'auction_details.brand',
+        'auction_details.model',
+        'auction_details.manufacturing_year',
+        'auction_details.registration_year',
+        'auction_details.engine_type',
+        'auction_details.country',
+        'auction_details.city',
+        'auction_details.area',
+        'auction_details.street',
+        'auction_details.floor',
+        'auction_details.total_area',
+        'auction_details.num_bedrooms',
+        'auction_details.num_bathrooms',
+    ];
+
+    public function searchRealEstate(Request $request)
+    {
+        return $this->search($request, 2); // Assuming category_id for real estate is 1
+    }
+
+    public function searchCars(Request $request)
+    {
+        return $this->search($request, 1); // Assuming category_id for cars is 2
+    }
+
+    public function searchOthers(Request $request)
+    {
+        return $this->search($request, 3); // Assuming category_id for others is 3
+    }
+
+    public function searchAll(Request $request)
+    {
+        return $this->search($request, null); // No category filter
+    }
+
+    protected function search(Request $request, $categoryId = null)
+    {
+        $query = Auction::leftJoin('auction_details', 'auctions.id', '=', 'auction_details.auction_id')
+            ->select('auctions.*');
+
+        if ($categoryId !== null) {
+            $query->where('category_id', $categoryId);
+        }
+
+        if ($request->has('q')) {
+            $keywords = explode(',', $request->get('q'));
+            foreach ($keywords as $keyword) {
+                $query->where(function($q) use ($keyword) {
+                    foreach ($this->searchableFields as $field) {
+                        $q->orWhere($field, 'LIKE', "%$keyword%");
+                    }
+                });
+            }
+        }
+
+        return response()->json($query->get());
+    }
+
 }

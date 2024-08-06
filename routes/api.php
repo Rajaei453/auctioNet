@@ -67,4 +67,9 @@ Route::group(['middleware' => ['assignGuard:user'], 'prefix' => 'user'], functio
     Route::post('/live-auctions/{id}/bid', [ApiController::class, 'placeLiveBid']);
     Route::post('/anonymous-auctions/{id}/bid', [ApiController::class, 'placeAnonymousBid']);
     Route::post('/decreasing-auctions/{id}/bid', [ApiController::class, 'placeDecresingBid']);
+
+    Route::get('/search/real-estate', [ApiController::class, 'searchRealEstate']);
+    Route::get('/search/cars', [ApiController::class, 'searchCars']);
+    Route::get('/search/others', [ApiController::class, 'searchOthers']);
+    Route::get('/search/all', [ApiController::class, 'searchAll']);
 });
