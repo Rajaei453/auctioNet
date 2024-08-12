@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,6 +15,7 @@ use App\Models\Reservation;
 
 class User extends Authenticatable implements JWTSubject
 {
+    use CrudTrait;
     use HasApiTokens, HasFactory, Notifiable;
 
     //protected $table = ['user'];

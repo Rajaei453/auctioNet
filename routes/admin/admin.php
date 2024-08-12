@@ -1,5 +1,5 @@
 <?php
-use Illuminate\Support\Facades\Route;
+/*use Illuminate\Support\Facades\Route;
 use app\Http\Middleware\AssignGuard;
 use App\Http\Controllers\Admin\Auth;
 use App\Http\Controllers\Admin\DashboardController;
@@ -40,4 +40,4 @@ Route::group(['prefix' => 'admin','namespace'=>'App\Http\Controllers\Admin'], fu
 
 
 
-});
+});*/
