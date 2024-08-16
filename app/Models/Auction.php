@@ -17,6 +17,7 @@ class Auction extends Model
         'type', // Type of the item
         'description', // Description of the item
         'image', // Image URL of the item
+        '3d_model_link', // 3d_model URL of the 3d item
         'minimum_bid', // Minimum bid price
         'increment_amount', // increment amount for bid
         'highest_bidder_id', // Highest bidder ID

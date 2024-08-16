@@ -50,9 +50,11 @@ Route::group(['middleware' => ['assignGuard:user'], 'prefix' => 'user'], functio
     // Routes for Auctions
     Route::get('/auctions/{id}/close', [ApiController::class, 'closeAuction']);
     Route::get('/my-auctions', [ApiController::class, 'getUserAuctions']);
-    Route::post('/auctions/{id}/editdetails', [ApiController::class, 'updateAuctionDetails']); // Resolved conflict by keeping POST
+    Route::post('/auctions/{id}/editdetails', [ApiController::class, 'updateAuctionDetails']);
     Route::get('/my-bids', [ApiController::class, 'getUserBids']);
     Route::get('/notifications', [ApiController::class, 'getNotification']);
+    Route::get('/notifications/{notificationId}/update-status', [ApiController::class, 'updateNotificationStatus']);
+    Route::get('/notifications/update-status-all', [ApiController::class, 'updateAllNotificationsStatus']);
 
     // Routes for Car Auctions
     Route::post('/car-auctions', [ApiController::class, 'storeCarAuction']);

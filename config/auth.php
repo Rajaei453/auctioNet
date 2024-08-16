@@ -14,7 +14,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => 'web',
+        'guard' => 'user',
         'passwords' => 'users',
     ],
 
@@ -40,6 +40,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'backpack' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
         'admin' => [
             'driver' => 'sanctum',
             'provider' => 'users',
@@ -52,7 +56,7 @@ return [
         'user' => [
             'driver' => 'jwt',
             'provider' => 'users',
-        ],
+            ],
         'provider' => [
             'driver' => 'jwt',
             'provider' => 'providers',
