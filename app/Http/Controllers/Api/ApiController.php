@@ -186,7 +186,7 @@ class ApiController extends Controller
     {
         try {
             // Get the authenticated user's ID
-            $userId = auth()->user()->id;
+            $userId = auth('user')->user()->id;
 
             // Find the user
             $user = User::findOrFail($userId);
@@ -205,7 +205,7 @@ class ApiController extends Controller
     public function getNotification()
     {
         // Get the authenticated user's notifications
-        $notifications = Notification::where('user_id', auth()->id())->orderBy('created_at', 'desc')->with('attachable')->get();
+        $notifications = Notification::where('user_id', auth('user')->id())->orderBy('created_at', 'desc')->with('attachable')->get();
 
         return response()->json([
             'success' => true,
@@ -213,6 +213,41 @@ class ApiController extends Controller
         ]);
     }
 
+    public function updateNotificationStatus($notificationId)
+    {
+        $notification = Notification::where('id', $notificationId)
+            ->where('user_id', auth('user')->id()) // Ensure the notification belongs to the authenticated user
+            ->first();
+
+        if (!$notification) {
+            return response()->json(['success' => false, 'message' => 'Notification not found or does not belong to the user.'], 404);
+        }
+
+        // Update the status of the specific notification
+        $notification->update([
+            'status' => '1' // Assuming '1' means the notification is read
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'notification' => $notification
+        ]);
+    }
+
+    // Method to update the status of all notifications for the authenticated user using a GET request
+    public function updateAllNotificationsStatus()
+    {
+        $userId = auth('user')->id();
+
+        // Update the status of all notifications for the user
+        $updated = Notification::where('user_id', $userId)
+            ->update(['status' => '1']); // Assuming '1' means the notifications are read
+
+        return response()->json([
+            'success' => true,
+            'updated_count' => $updated
+        ]);
+    }
 
     public function newAuction(Request $request){
 
@@ -564,7 +599,7 @@ class ApiController extends Controller
             $bid = new Bid();
             $bid->amount = $request->input('bid_amount');
             $bid->auction_id = $id;
-            $bid->user_id = auth()->id(); // Assuming the user is authenticated
+            $bid->user_id = auth('user')->id(); // Assuming the user is authenticated
             $bid->save();
 
             $auction->highest_bidder_id = $bid->user_id;
@@ -609,11 +644,11 @@ class ApiController extends Controller
             $bid = new Bid();
             $bid->amount = $request->input('bid_amount');
             $bid->auction_id = $id;
-            $bid->user_id = auth()->id(); // Assuming the user is authenticated
+            $bid->user_id = auth('user')->id(); // Assuming the user is authenticated
             $bid->save();
 
             // Update the highest bidder ID in the auction
-            $auction->highest_bidder_id = auth()->id();
+            $auction->highest_bidder_id = auth('user')->id();
             $auction->save();
 
             return response()->json(['message' => 'Bid placed successfully'], 200);
@@ -656,7 +691,7 @@ class ApiController extends Controller
             $bid = new Bid();
             $bid->amount = $newBidAmount;
             $bid->auction_id = $id;
-            $bid->user_id = auth()->id(); // Assuming the user is authenticated
+            $bid->user_id = auth('user')->id(); // Assuming the user is authenticated
             $bid->save();
 
             $auction->highest_bidder_id = $bid->user_id;
@@ -702,11 +737,11 @@ class ApiController extends Controller
             $bid = new Bid();
             $bid->amount = $request->input('bid_amount');
             $bid->auction_id = $id;
-            $bid->user_id = auth()->id(); // Assuming the user is authenticated
+            $bid->user_id = auth('user')->id(); // Assuming the user is authenticated
             $bid->save();
 
             // Update the highest bidder ID in the auction
-            $auction->highest_bidder_id = auth()->id();
+            $auction->highest_bidder_id = auth('user')->id();
             $auction->save();
 
             return response()->json(['message' => 'Bid placed successfully'], 200);
@@ -723,7 +758,7 @@ class ApiController extends Controller
             $auction = Auction::findOrFail($id);
 
             // Check if the authenticated user is the owner of the auction
-            if ($auction->user_id !== auth()->id()) {
+            if ($auction->user_id !== auth('user')->id()) {
                 return response()->json(['message' => 'Unauthorized'], 403);
             }
 
@@ -891,7 +926,7 @@ class ApiController extends Controller
 
     public function searchDecreasingAuctions(Request $request)
     {
-        return $this->search($request, 'decreasing'); // Filter for decreasing auctions
+        return $this->search($request, 4); // Filter for decreasing auctions
     }
 
     protected function search(Request $request, $filter = null)
