@@ -328,9 +328,7 @@ class ApiController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-
         $photoPath = $request->file('image')->store('images', 'public');
-
         // Create a new auction record with the provided data
         $auction = Auction::create([
             'user_id' => auth('user')->user()->id,
@@ -343,9 +341,7 @@ class ApiController extends Controller
             'end_time' => $request->end_time,
             'status' => $request->status,
             'type' => $request->type, // Store the auction type
-            'increment_amount' => ($request->input('type') === 'live') ? $request->increment_amount : null, // Store increment_amount for live auctions
-        ]);
-
+            'increment_amount' => ($request->input('type') === 'live') ? $request->increment_amount : null, ]);
         $auction->details()->create([
             'brand' => $request->input('brand'),
             'model' => $request->input('model'),
@@ -353,15 +349,12 @@ class ApiController extends Controller
             'registration_year' => $request->input('registration_year'),
             'engine_type' => $request->input('engine_type'),
         ]);
-
         $carAuction = Auction::where('id', $auction->id)
             ->with('details:id,auction_id,brand,model,manufacturing_year,registration_year,engine_type')
             ->first();
-
         if (!$carAuction) {
             return response()->json(['error' => 'Car auction not found'], 404);
         }
-
         return response()->json(['auction' => $carAuction], 201);
     }
 
@@ -545,8 +538,8 @@ class ApiController extends Controller
     public function decreasingAuctions()
     {
         // Get auctions
-        $decreasingAuctions = Auction::where('type', 'decreasing')
-            ->orderBy('id', 'asc') // Change 'id' to the desired field
+        $decreasingAuctions = Auction::where('category_id', '4')
+            ->orderBy('id', 'desc') // Change 'id' to the desired field
             ->get();
 
         // Return the JSON response
@@ -626,7 +619,7 @@ class ApiController extends Controller
             $auction = Auction::findOrFail($id);
 
             // Check if the auction is of type 'anonymous'
-            if ($auction->type !== 'decreasing') {
+            if ($auction->category_id !== '4') {
                 return response()->json(['message' => 'Bids can only be placed on decreasing auctions'], 400);
             }
 
